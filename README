@@ -1,0 +1,63 @@
+Configuring elastic-agent
+The elastic-agent will be used to ingest threat intelligence. It can also be used to do other things that won’t be covered here.
+This is an example for the format to setup the fleet-server and the elastic-agent:
+https://github.com/bruneaug/DShield-SIEM/blob/main/Troubleshooting/fleet-server-examples.txt
+From the dropdown menu, select Management → Fleet →Settings → Edit Outputs (Actions)
+
+
+Login server via SSH
+
+
+Copy ca.crt certificate to /tmp
+$ sudo docker cp es01:/usr/share/elasticsearch/config/certs/ca/ca.crt /tmp/.
+
+
+Get a copy of Elasticsearch CA trusted fingerprint
+$ sudo openssl x509 -fingerprint -sha256 -noout -in /tmp/ca.crt | awk -F"=" {' print $2 '} | sed s/://g
+
+
+The output will look like this:
+673FB617E15CCCE73F9B647EF99449642A19CFC1D75BF5772047DA99DB950844
+
+
+Get Content of Elasticsearch CA Certificate to Apply to Advanced YAML configuration. Type the command because it doesn't copy well
+$  sudo cat /tmp/ca.crt | sed -r 's/(.*)/    \1/g'
+
+
+Format must be exactly like this. Copy the output of the certificate in Notepad or Notepad++ and format exactly like this.
+It needs 2 spaces before certificate_authorities: and the dash (-) and it needs 4 spaces from the pipe (|) all the way down to the end of -----END CERTIFICATE-----
+sed will add the 4 spaces with the previous command against the CA certificate
+
+Change the Hosts to: https://es01:9200
+
+
+Save and apply settings after making the changes and adding the certificate information. Followed by Save and deploy
+
+Next phase is to Select Agent Policy → Add Agent → Enroll in Fleet → Add Fleet Server
+
+Provide a Name: es01
+Provide URL: https://fleet-server:8220
+
+Last: Generate Fleet Server policy
+Select: RPM
+
+We are going to need this information to setup our fleet server.
+Login via SSH to the fleet-server and make sure the fleet-server is running before setting up our agent:
+$ sudo docker start fleet-server
+$ sudo docker exec -ti fleet-server bash
+$ ./elastic-agent status (check it is running)
+$ ./elastic-agent restart (if it doesn't appear to be running, force a restart, and recheck the status)
+This is an example of what need to be copied to the fleet server. Ensure the fleet server es is: https://es01:9200
+Add the bold section after port=8220 because are certificates are self-generated. This will ensure the agent takes the update.
+Refer to this example for configuration: https://gitlab.collaboration.cyber.gc.ca/geekweek/geekweek9/g6/team-6.1/elk-s3/-/blob/main/Troubleshooting/fleet-server-examples.md
+The token and fingerprint will be different than this example but what is in italic and bolded must be added for the certificat to load:
+elastic-agent enroll \
+--url=https://fleet-server:8220 \
+--fleet-server-es=https://es01:9200 \
+--fleet-server-service-token=AAEAAWVsYXN0aWMvZmxlZXQtc2VydmVyL3Rva2VuLTE3MDU0NDg3MDMwNTI6NkNxcWlCeTRRVmlhYW0yeldhN3pGZw \
+--fleet-server-policy=fleet-server-policy \
+--fleet-server-es-ca-trusted-fingerprint=76DA77DAE186F8CFBA9E87D450D5419B68E2555A9BD57795611C0545ED0BF03F \
+--fleet-server-port=8220 \
+--certificate-authorities=/certs/ca/ca.crt \
+--fleet-server-es-ca=/certs/es01/es01.crt \
+--insecure
