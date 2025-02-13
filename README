@@ -14,7 +14,7 @@ $ sudo openssl x509 -fingerprint -sha256 -noout -in /tmp/ca.crt | awk -F"=" {' p
   673FB617E15CCCE73F9B647EF99449642A19CFC1D75BF5772047DA99DB950844
     paste this into Kabana > Management → Fleet →Settings → Edit Outputs (Actions) "Elasticsearch CA trusted fingerprint (optional)"
 
-3.  Get Content of Elasticsearch CA Certificate to Apply to Advanced YAML configuration. Type the command because it doesn't copy well
+3.  Get Content of Elasticsearch CA Certificate.
 $  sudo cat /tmp/ca.crt | sed -r 's/(.*)/    \1/g'
   
       output example 
@@ -28,9 +28,10 @@ $  sudo cat /tmp/ca.crt | sed -r 's/(.*)/    \1/g'
     z3P668YfhUbKdRF6S42Cg6zn
     -----END PRIVATE KEY-----
 
-paste the output into Kabana > Management → Fleet →Settings → Edit Outputs (Actions) "Advanced YAML configuration"
+4.  paste the output into Kabana > Management → Fleet →Settings → Edit Outputs (Actions) "Advanced YAML configuration"
 Format must be exactly like this. It needs 2 spaces before certificate_authorities
-Save and apply settings after making the changes and adding the certificate information. Followed by Save and deploy
+Save and apply settings after making the changes and adding the certificate information. 
+Followed by Save and deploy
 
 
 ADD FEET SERVER 
